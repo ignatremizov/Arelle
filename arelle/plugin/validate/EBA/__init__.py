@@ -19,6 +19,7 @@ from arelle.Version import authorLabel, copyrightLabel
 from arelle.XbrlConst import qnEnumerationItemTypes
 from arelle.ModelInstanceObject import ModelFact
 from arelle.utils.Contexts import getDuplicateContextGroups
+from arelle.utils.validate.Contexts import getContextsWithScenarioContent, getContextsWithSegments
 import regex as re
 from lxml import etree
 from collections import defaultdict
@@ -178,6 +179,8 @@ def validateFacts(val, factsToCheck):
     # note EBA 2.1 is in ModelDocument.py
 
     timelessDatePattern = re.compile(r"\s*([0-9]{4})-([0-9]{2})-([0-9]{2})\s*$")
+    contextsWithSegments = getContextsWithSegments(modelXbrl)
+    contextsWithScenarioContent = getContextsWithScenarioContent(modelXbrl)
     for cntx in modelXbrl.contexts.values():
         if getattr(cntx, "_batchChecked", False):
             continue # prior streaming batch already checked
@@ -200,11 +203,11 @@ def validateFacts(val, factsToCheck):
             # cannot pass context object to final() below, for error logging, if streaming mode
             val.cntxDates[cntx.instantDatetime].add(modelXbrl if getattr(val.modelXbrl, "isStreamingMode", False)
                                                     else cntx)
-        if cntx.hasSegment:
+        if cntx in contextsWithSegments:
             modelXbrl.error(("EBA.2.14","EIOPA.N.2.14"),
                 _("Contexts MUST NOT contain xbrli:segment values: %(cntx)s.'"),
                 modelObject=cntx, cntx=cntx.id)
-        if cntx.nonDimValues("scenario"):
+        if cntx in contextsWithScenarioContent:
             modelXbrl.error(("EBA.2.15","EIOPA.S.2.15" if val.isEIOPAfullVersion else "EIOPA.N.2.15"),
                 _("Contexts MUST NOT contain non-dimensional xbrli:scenario values: %(cntx)s.'"),
                 modelObject=cntx, cntx=cntx.id,

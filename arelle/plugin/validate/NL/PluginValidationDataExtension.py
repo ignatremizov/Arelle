@@ -27,7 +27,6 @@ from arelle.utils.validate.Concepts import getExtensionConcepts
 from arelle.utils.validate.Common import isExtensionUri
 from arelle.utils.validate.ValidationUtil import etreeIterWithDepth
 from arelle.XbrlConst import ixbrl11
-from arelle.XmlValidate import lexicalPatterns
 from arelle.XmlValidateConst import VALID
 from .Constants import NON_DIMENSIONALIZED_LINE_ITEM_LINKROLES, STANDARD_TAXONOMY_URL_PREFIXES, STYLE_CSS_HIDDEN_PATTERN, STYLE_IX_HIDDEN_PATTERN, UNTRANSFORMABLE_TYPES
 
@@ -51,14 +50,6 @@ class AnchorData:
     extLineItemsNotAnchored: frozenset[ModelConcept]
     extLineItemsWronglyAnchored: frozenset[ModelConcept]
     extConceptsNotAnchoredToSameDerivedType: frozenset[ModelConcept]
-
-
-@dataclass(frozen=True)
-class ContextData:
-    contextsWithImproperContent: list[ModelContext | None]
-    contextsWithPeriodTime: list[ModelContext | None]
-    contextsWithPeriodTimeZone: list[ModelContext | None]
-    contextsWithSegments: list[ModelContext | None]
 
 
 @dataclass(frozen=True)
@@ -182,37 +173,6 @@ class PluginValidationDataExtension(PluginData):
             for domMbrRel in modelXbrl.relationshipSet(XbrlConst.domainMember, ELR).fromModelObject(sourceDomMbr):
                 self.addDomMbrs(modelXbrl, domMbrRel.toModelObject, domMbrRel.consecutiveLinkrole, membersSet)
 
-
-    @lru_cache(1)
-    def checkContexts(self, modelXbrl: ModelXbrl) -> ContextData:
-        allContexts = modelXbrl.contextsByDocument()
-        contextsWithImproperContent: list[ModelContext | None] = []
-        contextsWithPeriodTime: list[ModelContext | None] = []
-        contextsWithPeriodTimeZone: list[ModelContext | None] = []
-        contextsWithSegments: list[ModelContext | None] = []
-        datetimePattern = lexicalPatterns["XBRLI_DATEUNION"]
-        for contexts in allContexts.values():
-            for context in contexts:
-                for uncastElt in context.iterdescendants("{http://www.xbrl.org/2003/instance}startDate",
-                                                          "{http://www.xbrl.org/2003/instance}endDate",
-                                                          "{http://www.xbrl.org/2003/instance}instant"):
-                    elt = cast(Any, uncastElt)
-                    m = datetimePattern.match(elt.stringValue)
-                    if m:
-                        if m.group(1):
-                            contextsWithPeriodTime.append(context)
-                        if m.group(3):
-                            contextsWithPeriodTimeZone.append(context)
-                if context.hasSegment:
-                    contextsWithSegments.append(context)
-                if context.nonDimValues("scenario"):
-                    contextsWithImproperContent.append(context)
-        return ContextData(
-            contextsWithImproperContent=contextsWithImproperContent,
-            contextsWithPeriodTime=contextsWithPeriodTime,
-            contextsWithPeriodTimeZone=contextsWithPeriodTimeZone,
-            contextsWithSegments=contextsWithSegments,
-        )
 
     def checkLabels(self, issues: set[ModelConcept| None], modelXbrl: ModelXbrl, parent: ModelConcept, relSet: ModelRelationshipSet, labelrole: str | None, visited: set[ModelConcept]) -> set[ModelConcept| None]:
         visited.add(parent)
@@ -414,18 +374,6 @@ class PluginValidationDataExtension(PluginData):
 
     def getBaseElements(self, modelXbrl: ModelXbrl) -> set[Any | None]:
         return self.checkInlineHTMLElements(modelXbrl).baseElements
-
-    def getContextsWithImproperContent(self, modelXbrl: ModelXbrl) -> list[ModelContext | None]:
-        return self.checkContexts(modelXbrl).contextsWithImproperContent
-
-    def getContextsWithPeriodTime(self, modelXbrl: ModelXbrl) -> list[ModelContext | None]:
-        return self.checkContexts(modelXbrl).contextsWithPeriodTime
-
-    def getContextsWithPeriodTimeZone(self, modelXbrl: ModelXbrl) -> list[ModelContext | None]:
-        return self.checkContexts(modelXbrl).contextsWithPeriodTimeZone
-
-    def getContextsWithSegments(self, modelXbrl: ModelXbrl) -> list[ModelContext | None]:
-        return self.checkContexts(modelXbrl).contextsWithSegments
 
     @lru_cache(1)
     def getDocumentsInDts(self, modelXbrl: ModelXbrl) -> dict[ModelDocument, str | None]:

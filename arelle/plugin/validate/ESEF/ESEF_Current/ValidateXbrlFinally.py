@@ -27,6 +27,12 @@ from arelle.ModelValue import QName
 from arelle.ModelValue import qname
 from arelle.ModelXbrl import ModelXbrl
 
+from arelle.utils.validate.Contexts import (
+    getContextsWithPeriodTime,
+    getContextsWithPeriodTimeZone,
+    getContextsWithScenarioContent,
+    getContextsWithSegments,
+)
 from arelle.utils.validate.ESEFImage import ImageValidationParameters, checkSVGContentElt, validateImageAndLog
 from arelle.utils.validate.ValidationUtil import etreeIterWithDepth
 from arelle.PythonUtil import isLegacyAbs, normalizeSpace
@@ -58,7 +64,7 @@ from ..Const import (
     DefaultDimensionLinkroles,
     FOOTNOTE_LINK_CHILDREN,
     LineItemsNotQualifiedLinkroles,
-    PERCENT_TYPES, datetimePattern,
+    PERCENT_TYPES,
     docTypeXhtmlPattern,
     esefMandatoryElementNames2020,
     esefPrimaryStatementPlaceholderNames,
@@ -599,48 +605,25 @@ def validateXbrlFinally(val: ValidateXbrl, *args: Any, **kwargs: Any) -> None:
             modelXbrl.modelManager.showStatus(None)
             return # no more checks apply
 
-        contextsWithDisallowedOCEs = []
-        contextsWithDisallowedOCEcontent = []
-        contextsWithPeriodTime: list[ModelContext] = []
-        contextsWithPeriodTimeZone: list[ModelContext] = []
+        contextsWithPeriodTime = getContextsWithPeriodTime(modelXbrl)
+        contextsWithPeriodTimeZone = getContextsWithPeriodTimeZone(modelXbrl)
+        contextsWithDisallowedOCEs = getContextsWithSegments(modelXbrl)
+        contextsWithDisallowedOCEcontent = getContextsWithScenarioContent(modelXbrl)
         contextsWithWrongInstantDate: list[ModelContext] = []
         contextIdentifiers = defaultdict(list)
         for context in modelXbrl.contexts.values():
-            for uncast_elt in context.iterdescendants("{http://www.xbrl.org/2003/instance}startDate",
-                                               "{http://www.xbrl.org/2003/instance}endDate",
-                                               "{http://www.xbrl.org/2003/instance}instant"):
-                elt = cast(Any, uncast_elt)
-
-                m = datetimePattern.match(elt.stringValue)
-                if m:
-                    if m.group(1):
-                        contextsWithPeriodTime.append(context)
-                    if m.group(3):
-                        contextsWithPeriodTimeZone.append(context)
-
             if esefDisclosureSystemYear >= 2024 and context.instantDate and context.instantDate.day == 1 and context.instantDate.month == 1:
                 contextsWithWrongInstantDate.append(context)
-            for elt in context.iterdescendants("{http://www.xbrl.org/2003/instance}segment"):
-                contextsWithDisallowedOCEs.append(context)
-                break
-            for elt in context.iterdescendants("{http://www.xbrl.org/2003/instance}scenario"):
-                if isinstance(elt,ModelObject):
-                    if any(True for child in elt.iterchildren()
-                                if isinstance(child,ModelObject) and
-                                   child.tag not in ("{http://xbrl.org/2006/xbrldi}explicitMember",
-                                                     "{http://xbrl.org/2006/xbrldi}typedMember")):
-                        contextsWithDisallowedOCEcontent.append(context)
-            # check periods here
             contextIdentifiers[context.entityIdentifier].append(context)
 
         if contextsWithDisallowedOCEs:
             modelXbrl.error("ESEF.2.1.3.segmentUsed",
                 _("xbrli:segment container MUST NOT be used in contexts: %(contextIds)s"),
-                modelObject=contextsWithDisallowedOCEs, contextIds=", ".join(c.id for c in contextsWithDisallowedOCEs if c.id is not None))
+                modelObject=contextsWithDisallowedOCEs, contextIds=", ".join(c.id for c in contextsWithDisallowedOCEs if isinstance(c, ModelContext) and c.id is not None))
         if contextsWithDisallowedOCEcontent:
             modelXbrl.error("ESEF.2.1.3.scenarioContainsNonDimensionalContent",
                 _("xbrli:scenario in contexts MUST NOT contain any other content than defined in XBRL Dimensions specification: %(contextIds)s"),
-                modelObject=contextsWithDisallowedOCEcontent, contextIds=", ".join(c.id for c in contextsWithDisallowedOCEcontent if c.id is not None))
+                modelObject=contextsWithDisallowedOCEcontent, contextIds=", ".join(c.id for c in contextsWithDisallowedOCEcontent if isinstance(c, ModelContext) and c.id is not None))
         if len(contextIdentifiers) > 1:
             modelXbrl.error("ESEF.2.1.4.multipleIdentifiers",
                 _("All entity identifiers in contexts MUST have identical content: %(contextIds)s"),
@@ -664,11 +647,11 @@ def validateXbrlFinally(val: ValidateXbrl, *args: Any, **kwargs: Any) -> None:
         if contextsWithPeriodTime:
             modelXbrl.error("ESEF.2.1.2.periodWithTimeContent",
                 _("The xbrli:startDate, xbrli:endDate and xbrli:instant elements MUST identify periods using whole days (i.e. specified without a time content): %(contextIds)s"),
-                modelObject=contextsWithPeriodTime, contextIds=", ".join(c.id for c in contextsWithPeriodTime if c.id))
+                modelObject=contextsWithPeriodTime, contextIds=", ".join(c.id for c in contextsWithPeriodTime if isinstance(c, ModelContext) and c.id is not None))
         if contextsWithPeriodTimeZone:
             modelXbrl.error("ESEF.2.1.2.periodWithTimeZone",
                 _("The xbrli:startDate, xbrli:endDate and xbrli:instant elements MUST identify periods using whole days (i.e. specified without a time zone): %(contextIds)s"),
-                modelObject=contextsWithPeriodTimeZone, contextIds=", ".join(c.id for c in contextsWithPeriodTimeZone if c.id))
+                modelObject=contextsWithPeriodTimeZone, contextIds=", ".join(c.id for c in contextsWithPeriodTimeZone if isinstance(c, ModelContext) and c.id is not None))
         if contextsWithWrongInstantDate:
             for context in contextsWithWrongInstantDate:
                 modelXbrl.error("ESEF.2.1.2.inappropriateInstantDate",

@@ -26,6 +26,7 @@ from arelle.XbrlConst import qnXbrlScenario, qnXbrldiExplicitMember, xhtmlBaseId
 from arelle.XmlValidate import VALID
 from arelle.typing import TypeGetText
 from arelle.utils.validate.Concepts import getExtensionConcepts
+from arelle.utils.validate.Contexts import getContextsWithSegments
 from arelle.utils.Contexts import getDuplicateContextGroups
 from arelle.utils.PluginHooks import ValidationHook
 from arelle.utils.Units import getDuplicateUnitGroups
@@ -263,12 +264,7 @@ def rule_gfm_1_2_4(
     """
     EDINET.EC5700W: [GFM 1.2.4] Segment must not be used in the context.
     """
-    allContexts = val.modelXbrl.contextsByDocument()
-    contextsWithSegments =[]
-    for contexts in allContexts.values():
-        for context in contexts:
-            if context.hasSegment:
-                contextsWithSegments.append(context)
+    contextsWithSegments = getContextsWithSegments(val.modelXbrl)
     if len(contextsWithSegments) > 0:
         yield Validation.warning(
             codes='EDINET.EC5700W.GFM.1.2.4',

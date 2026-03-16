@@ -26,6 +26,12 @@ from arelle.typing import TypeGetText
 from arelle.utils.PluginHooks import ValidationHook
 from arelle.utils.validate.Concepts import getExtensionConcepts
 from arelle.utils.validate.Common import isExtensionUri
+from arelle.utils.validate.Contexts import (
+    getContextsWithPeriodTime,
+    getContextsWithPeriodTimeZone,
+    getContextsWithScenarioContent,
+    getContextsWithSegments,
+)
 from arelle.utils.validate.Decorator import validation
 from arelle.utils.validate.DetectScriptsInXhtml import containsScriptMarkers
 from arelle.utils.validate.ESEFImage import ImageValidationParameters, validateImage
@@ -148,7 +154,7 @@ def rule_nl_kvk_3_1_2_1(
     """
     NL-KVK.3.1.2.1: xbrli:startDate, xbrli:endDate, xbrli:instant formatted as yyyy-mm-dd without time.
     """
-    contextsWithPeriodTime = pluginData.getContextsWithPeriodTime(val.modelXbrl)
+    contextsWithPeriodTime = getContextsWithPeriodTime(val.modelXbrl)
     if len(contextsWithPeriodTime) != 0:
         yield Validation.error(
             codes='NL.NL-KVK-3.1.2.1.periodWithTimeContent',
@@ -170,7 +176,7 @@ def rule_nl_kvk_3_1_2_2(
     """
     NL-KVK.3.1.2.1: xbrli:startDate, xbrli:endDate, xbrli:instant format to be formatted as yyyy-mm-dd without time zone.
     """
-    contextsWithPeriodTimeZone = pluginData.getContextsWithPeriodTimeZone(val.modelXbrl)
+    contextsWithPeriodTimeZone = getContextsWithPeriodTimeZone(val.modelXbrl)
     if len(contextsWithPeriodTimeZone) != 0:
             yield Validation.error(
                 codes='NL.NL-KVK-3.1.2.2.periodWithTimeZone',
@@ -192,7 +198,7 @@ def rule_nl_kvk_3_1_3_1 (
     """
     NL-KVK.3.1.3.1: xbrli:segment must not be used in contexts.
     """
-    contextsWithSegments = pluginData.getContextsWithSegments(val.modelXbrl)
+    contextsWithSegments = getContextsWithSegments(val.modelXbrl)
     if len(contextsWithSegments) != 0:
         yield Validation.error(
             codes='NL.NL-KVK-3.1.3.1.segmentUsed',
@@ -214,7 +220,7 @@ def rule_nl_kvk_3_1_3_2 (
     """
     NL-KVK.3.1.3.2: xbrli:scenario must only contain content defined in XBRL Dimensions specification.
     """
-    contextsWithImproperContent = pluginData.getContextsWithImproperContent(val.modelXbrl)
+    contextsWithImproperContent = getContextsWithScenarioContent(val.modelXbrl)
     if len(contextsWithImproperContent) != 0:
         yield Validation.error(
             codes='NL.NL-KVK-3.1.3.2.scenarioContainsNotAllowedContent',
