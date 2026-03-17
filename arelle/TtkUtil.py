@@ -45,3 +45,16 @@ def compute_toolbar_icon_scale(font_linespace: int, base_icon_size: int = 16) ->
     """
     target_icon_size = max(base_icon_size, math.ceil(font_linespace * 0.8))
     return max(1, round(target_icon_size / base_icon_size))
+
+
+def compute_dialog_width(
+    screen_width: int,
+    preferred_width: int,
+    minimum_width: int,
+    maximum_fraction: float = 0.6,
+) -> int:
+    """
+    Size dialogs to a readable width while keeping them within a fraction of the screen.
+    """
+    maximum_width = max(minimum_width, math.floor(screen_width * maximum_fraction))
+    return max(minimum_width, min(preferred_width, maximum_width))

@@ -1,4 +1,4 @@
-from arelle.TtkUtil import coerce_style_int, compute_toolbar_icon_scale, compute_treeview_rowheight
+from arelle.TtkUtil import coerce_style_int, compute_dialog_width, compute_toolbar_icon_scale, compute_treeview_rowheight
 
 
 def test_coerce_style_int_accepts_numeric_strings():
@@ -26,3 +26,11 @@ def test_compute_toolbar_icon_scale_keeps_default_size_for_normal_fonts():
 
 def test_compute_toolbar_icon_scale_doubles_icons_for_large_desktop_fonts():
     assert compute_toolbar_icon_scale(37) == 2
+
+
+def test_compute_dialog_width_prefers_requested_width_when_screen_allows():
+    assert compute_dialog_width(1920, 760, 560) == 760
+
+
+def test_compute_dialog_width_caps_to_screen_fraction():
+    assert compute_dialog_width(900, 760, 560) == 560
