@@ -47,9 +47,9 @@ from tkinter import (
 from tkinter import font as tkFont
 
 try:
-    from tkinter.ttk import Button, Combobox, Frame, Label, Notebook, PanedWindow, Separator
+    from tkinter.ttk import Button, Combobox, Frame, Label, Notebook, PanedWindow, Separator, Style
 except ImportError:  # 3.0 versions of tkinter
-    from ttk import Button, Combobox, Frame, Label, Notebook, PanedWindow, Separator
+    from ttk import Button, Combobox, Frame, Label, Notebook, PanedWindow, Separator, Style
 try:
     import syslog
 except ImportError:
@@ -105,6 +105,7 @@ from arelle.ModelFormulaObject import FormulaOptions
 from arelle.oim.xml.Save import saveOimReportToXmlInstance
 from arelle.PluginManager import pluginClassMethods
 from arelle.rendering import RenderingEvaluator
+from arelle.TtkUtil import compute_treeview_rowheight
 from arelle.UrlUtil import isHttpUrl
 from arelle.ValidateXbrlCalcs import ValidateCalcsMode as CalcsMode
 from arelle.ValidateXbrlDTS import ValidateBaseTaxonomiesMode
@@ -138,6 +139,7 @@ class CntlrWinMain (Cntlr.Cntlr):
             toolbarButtonPadding = 1
         else:
             toolbarButtonPadding = 4
+        self.configureTtkStyleMetrics(parent)
 
         tkinter.CallWrapper = TkinterCallWrapper
 
@@ -531,6 +533,21 @@ class CntlrWinMain (Cntlr.Cntlr):
                 self.modelManager.skipDTS = True
             lastArg = arg
         self.setValidateTooltipText()
+
+    def configureTtkStyleMetrics(self, parent: Tk) -> None:
+        style = Style(parent)
+        treeview_font_name = style.lookup("Treeview", "font") or "TkDefaultFont"
+        try:
+            treeview_font = tkFont.nametofont(treeview_font_name)
+        except TclError:
+            treeview_font = tkFont.Font(root=parent, font=treeview_font_name)
+        style.configure(
+            "Treeview",
+            rowheight=compute_treeview_rowheight(
+                treeview_font.metrics("linespace"),
+                style.lookup("Treeview", "rowheight"),
+            ),
+        )
 
     def buildValidateDuplicateFactsMenu(self, validateMenu: Menu) -> None:
         defaultArg = ValidateDuplicateFacts.DuplicateTypeArg.NONE.value
