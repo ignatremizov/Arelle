@@ -33,3 +33,15 @@ def compute_treeview_rowheight(font_linespace: int, configured_rowheight: Any = 
     content_padding = max(6, math.ceil(font_linespace * 0.35))
     minimum_height = font_linespace + content_padding
     return max(configured_height, minimum_height)
+
+
+def compute_toolbar_icon_scale(font_linespace: int, base_icon_size: int = 16) -> int:
+    """
+    Scale fixed-size toolbar icons to match larger desktop font metrics.
+
+    The bundled toolbar GIFs are 16x16. On higher-DPI Linux desktops the default
+    Tk font can be much taller, which leaves the toolbar looking disproportionately
+    small even after text-based widgets are corrected.
+    """
+    target_icon_size = max(base_icon_size, math.ceil(font_linespace * 0.8))
+    return max(1, round(target_icon_size / base_icon_size))

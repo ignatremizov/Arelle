@@ -1,4 +1,4 @@
-from arelle.TtkUtil import coerce_style_int, compute_treeview_rowheight
+from arelle.TtkUtil import coerce_style_int, compute_toolbar_icon_scale, compute_treeview_rowheight
 
 
 def test_coerce_style_int_accepts_numeric_strings():
@@ -18,3 +18,11 @@ def test_compute_treeview_rowheight_respects_existing_larger_height():
 
 def test_compute_treeview_rowheight_grows_to_fit_font_linespace():
     assert compute_treeview_rowheight(18, 20) == 25
+
+
+def test_compute_toolbar_icon_scale_keeps_default_size_for_normal_fonts():
+    assert compute_toolbar_icon_scale(18) == 1
+
+
+def test_compute_toolbar_icon_scale_doubles_icons_for_large_desktop_fonts():
+    assert compute_toolbar_icon_scale(37) == 2

@@ -105,7 +105,7 @@ from arelle.ModelFormulaObject import FormulaOptions
 from arelle.oim.xml.Save import saveOimReportToXmlInstance
 from arelle.PluginManager import pluginClassMethods
 from arelle.rendering import RenderingEvaluator
-from arelle.TtkUtil import compute_treeview_rowheight
+from arelle.TtkUtil import compute_toolbar_icon_scale, compute_treeview_rowheight
 from arelle.UrlUtil import isHttpUrl
 from arelle.ValidateXbrlCalcs import ValidateCalcsMode as CalcsMode
 from arelle.ValidateXbrlDTS import ValidateBaseTaxonomiesMode
@@ -129,9 +129,9 @@ class CntlrWinMain (Cntlr.Cntlr):
         localeSetupMessage = self.modelManager.setLocale() # set locale before GUI for menu strings, pass any msg to logger after log pane starts up
         self.labelLang = overrideLang if overrideLang else self.modelManager.defaultLang
         self.data = {}
+        _defaultFont = tkFont.nametofont("TkDefaultFont") # label, status bar, treegrid
 
         if self.isMac: # mac Python fonts bigger than other apps (terminal, text edit, Word), and to windows Arelle
-            _defaultFont = tkFont.nametofont("TkDefaultFont") # label, status bar, treegrid
             _defaultFont.configure(size=11)
             _textFont = tkFont.nametofont("TkTextFont") # entry widget and combobox entry field
             _textFont.configure(size=11)
@@ -139,6 +139,7 @@ class CntlrWinMain (Cntlr.Cntlr):
             toolbarButtonPadding = 1
         else:
             toolbarButtonPadding = 4
+        self.toolbarIconScale = compute_toolbar_icon_scale(_defaultFont.metrics("linespace"))
         self.configureTtkStyleMetrics(parent)
 
         tkinter.CallWrapper = TkinterCallWrapper
@@ -400,6 +401,8 @@ class CntlrWinMain (Cntlr.Cntlr):
                 image = os.path.join(self.imagesDir, image)
                 try:
                     image = PhotoImage(file=image)
+                    if self.toolbarIconScale > 1:
+                        image = image.zoom(self.toolbarIconScale, self.toolbarIconScale)
                     self.toolbar_images.append(image)
                     tbControl = Button(toolbar, image=image, command=command, style="Toolbutton", padding=toolbarButtonPadding)
                     tbControl.grid(row=0, column=menubarColumn)
