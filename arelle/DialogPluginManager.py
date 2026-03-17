@@ -42,6 +42,9 @@ def backgroundCheckForUpdates(cntlr):
     cntlr.uiThreadQueue.put((DialogPluginManager, [cntlr, modulesWithNewerFileDates]))
 
 class DialogPluginManager(Toplevel):
+    DEFAULT_DIALOG_WIDTH = 1180
+    DEFAULT_DIALOG_HEIGHT = 720
+
     def __init__(self, mainWin, modulesWithNewerFileDates):
         super(DialogPluginManager, self).__init__(mainWin.parent)
 
@@ -68,9 +71,9 @@ class DialogPluginManager(Toplevel):
         frame = Frame(self)
 
         # left button frame
-        buttonFrame = Frame(frame, width=40)
+        buttonFrame = Frame(frame, width=140)
         buttonFrame.columnconfigure(0, weight=1)
-        addLabel = Label(buttonFrame, text=_("Find plug-in modules:"), wraplength=60, justify="center")
+        addLabel = Label(buttonFrame, text=_("Find plug-in modules:"), wraplength=130, justify="center")
         addSelectLocalButton = Button(buttonFrame, text=_("Select"), command=self.selectLocally)
         ToolTip(addSelectLocalButton, text=_("Select python module files from the local plugin directory."), wraplength=240)
         addBrowseLocalButton = Button(buttonFrame, text=_("Browse"), command=self.browseLocally)
@@ -84,7 +87,7 @@ class DialogPluginManager(Toplevel):
         buttonFrame.grid(row=0, column=0, rowspan=3, sticky=(N, S, W), padx=3, pady=3)
 
         # right tree frame (plugins already known to arelle)
-        modulesFrame = Frame(frame, width=720)
+        modulesFrame = Frame(frame, width=980)
         vScrollbar = Scrollbar(modulesFrame, orient=VERTICAL)
         hScrollbar = Scrollbar(modulesFrame, orient=HORIZONTAL)
         self.modulesView = Treeview(modulesFrame, xscrollcommand=hScrollbar.set, yscrollcommand=vScrollbar.set, height=7)
@@ -99,22 +102,22 @@ class DialogPluginManager(Toplevel):
         modulesFrame.grid(row=0, column=1, columnspan=4, sticky=(N, S, E, W), padx=3, pady=3)
         self.modulesView.focus_set()
 
-        self.modulesView.column("#0", width=120, anchor="w")
+        self.modulesView.column("#0", width=240, minwidth=180, anchor="w", stretch=True)
         self.modulesView.heading("#0", text=_("Name"))
         self.modulesView["columns"] = ("author", "ver", "status", "date", "update", "descr", "license")
-        self.modulesView.column("author", width=100, anchor="w", stretch=False)
+        self.modulesView.column("author", width=160, minwidth=120, anchor="w", stretch=False)
         self.modulesView.heading("author", text=_("Author"))
-        self.modulesView.column("ver", width=60, anchor="w", stretch=False)
+        self.modulesView.column("ver", width=90, minwidth=80, anchor="w", stretch=False)
         self.modulesView.heading("ver", text=_("Version"))
-        self.modulesView.column("status", width=50, anchor="w", stretch=False)
+        self.modulesView.column("status", width=110, minwidth=90, anchor="w", stretch=False)
         self.modulesView.heading("status", text=_("Status"))
-        self.modulesView.column("date", width=70, anchor="w", stretch=False)
+        self.modulesView.column("date", width=180, minwidth=160, anchor="w", stretch=False)
         self.modulesView.heading("date", text=_("File Date"))
-        self.modulesView.column("update", width=50, anchor="w", stretch=False)
+        self.modulesView.column("update", width=100, minwidth=90, anchor="w", stretch=False)
         self.modulesView.heading("update", text=_("Update"))
-        self.modulesView.column("descr", width=200, anchor="w", stretch=False)
+        self.modulesView.column("descr", width=360, minwidth=220, anchor="w", stretch=True)
         self.modulesView.heading("descr", text=_("Description"))
-        self.modulesView.column("license", width=70, anchor="w", stretch=False)
+        self.modulesView.column("license", width=140, minwidth=110, anchor="w", stretch=False)
         self.modulesView.heading("license", text=_("License"))
 
         classesFrame = Frame(frame)
@@ -131,54 +134,54 @@ class DialogPluginManager(Toplevel):
         classesFrame.grid(row=1, column=1, columnspan=4, sticky=(N, S, E, W), padx=3, pady=3)
         self.classesView.focus_set()
 
-        self.classesView.column("#0", width=200, anchor="w")
+        self.classesView.column("#0", width=320, minwidth=220, anchor="w", stretch=False)
         self.classesView.heading("#0", text=_("Class"))
         self.classesView["columns"] = ("modules",)
-        self.classesView.column("modules", width=500, anchor="w", stretch=False)
+        self.classesView.column("modules", width=720, minwidth=360, anchor="w", stretch=True)
         self.classesView.heading("modules", text=_("Modules"))
 
         # bottom frame module info details
-        moduleInfoFrame = Frame(frame, width=700)
+        moduleInfoFrame = Frame(frame, width=980)
         moduleInfoFrame.columnconfigure(1, weight=1)
 
-        self.moduleNameLabel = Label(moduleInfoFrame, wraplength=600, justify="left",
+        self.moduleNameLabel = Label(moduleInfoFrame, wraplength=940, justify="left",
                                      font=font.Font(family='Helvetica', size=12, weight='bold'))
         self.moduleNameLabel.grid(row=0, column=0, columnspan=4, sticky=W)
         self.moduleAuthorHdr = Label(moduleInfoFrame, text=_("author:"), state=DISABLED)
         self.moduleAuthorHdr.grid(row=1, column=0, sticky=W)
-        self.moduleAuthorLabel = Label(moduleInfoFrame, wraplength=600, justify="left")
+        self.moduleAuthorLabel = Label(moduleInfoFrame, wraplength=940, justify="left")
         self.moduleAuthorLabel.grid(row=1, column=1, columnspan=3, sticky=W)
         self.moduleDescrHdr = Label(moduleInfoFrame, text=_("description:"), state=DISABLED)
         self.moduleDescrHdr.grid(row=2, column=0, sticky=W)
-        self.moduleDescrLabel = Label(moduleInfoFrame, wraplength=600, justify="left")
+        self.moduleDescrLabel = Label(moduleInfoFrame, wraplength=940, justify="left")
         self.moduleDescrLabel.grid(row=2, column=1, columnspan=3, sticky=W)
         self.moduleClassesHdr = Label(moduleInfoFrame, text=_("classes:"), state=DISABLED)
         self.moduleClassesHdr.grid(row=3, column=0, sticky=W)
-        self.moduleClassesLabel = Label(moduleInfoFrame, wraplength=600, justify="left")
+        self.moduleClassesLabel = Label(moduleInfoFrame, wraplength=940, justify="left")
         self.moduleClassesLabel.grid(row=3, column=1, columnspan=3, sticky=W)
         ToolTip(self.moduleClassesLabel, text=_("List of classes that this plug-in handles."), wraplength=240)
         self.moduleVersionHdr = Label(moduleInfoFrame, text=_("version:"), state=DISABLED)
         self.moduleVersionHdr.grid(row=4, column=0, sticky=W)
-        self.moduleVersionLabel = Label(moduleInfoFrame, wraplength=600, justify="left")
+        self.moduleVersionLabel = Label(moduleInfoFrame, wraplength=940, justify="left")
         self.moduleVersionLabel.grid(row=4, column=1, columnspan=3, sticky=W)
         ToolTip(self.moduleVersionLabel, text=_("Version of plug-in module."), wraplength=240)
         self.moduleUrlHdr = Label(moduleInfoFrame, text=_("URL:"), state=DISABLED)
         self.moduleUrlHdr.grid(row=5, column=0, sticky=W)
-        self.moduleUrlLabel = Label(moduleInfoFrame, wraplength=600, justify="left")
+        self.moduleUrlLabel = Label(moduleInfoFrame, wraplength=940, justify="left")
         self.moduleUrlLabel.grid(row=5, column=1, columnspan=3, sticky=W)
         ToolTip(self.moduleUrlLabel, text=_("URL of plug-in module (local file path or web loaded file)."), wraplength=240)
         self.moduleDateHdr = Label(moduleInfoFrame, text=_("date:"), state=DISABLED)
         self.moduleDateHdr.grid(row=6, column=0, sticky=W)
-        self.moduleDateLabel = Label(moduleInfoFrame, wraplength=600, justify="left")
+        self.moduleDateLabel = Label(moduleInfoFrame, wraplength=940, justify="left")
         self.moduleDateLabel.grid(row=6, column=1, columnspan=3, sticky=W)
         ToolTip(self.moduleDateLabel, text=_("Date of currently loaded module file (with parenthetical node when an update is available)."), wraplength=240)
         self.moduleLicenseHdr = Label(moduleInfoFrame, text=_("license:"), state=DISABLED)
         self.moduleLicenseHdr.grid(row=7, column=0, sticky=W)
-        self.moduleLicenseLabel = Label(moduleInfoFrame, wraplength=600, justify="left")
+        self.moduleLicenseLabel = Label(moduleInfoFrame, wraplength=940, justify="left")
         self.moduleLicenseLabel.grid(row=7, column=1, columnspan=3, sticky=W)
         self.moduleImportsHdr = Label(moduleInfoFrame, text=_("imports:"), state=DISABLED)
         self.moduleImportsHdr.grid(row=8, column=0, sticky=W)
-        self.moduleImportsLabel = Label(moduleInfoFrame, wraplength=600, justify="left")
+        self.moduleImportsLabel = Label(moduleInfoFrame, wraplength=940, justify="left")
         self.moduleImportsLabel.grid(row=8, column=1, columnspan=3, sticky=W)
         self.moduleEnableButton = Button(moduleInfoFrame, text=self.ENABLE, state=DISABLED, command=self.moduleEnable)
         ToolTip(self.moduleEnableButton, text=_("Enable/disable plug in."), wraplength=240)
@@ -210,11 +213,21 @@ class DialogPluginManager(Toplevel):
 
         self.loadTreeViews()
 
-        self.geometry("+{0}+{1}".format(dialogX+50,dialogY+100))
+        self.minsize(980, 620)
+        self.geometry(
+            "{0}x{1}+{2}+{3}".format(
+                self.DEFAULT_DIALOG_WIDTH,
+                self.DEFAULT_DIALOG_HEIGHT,
+                dialogX + 50,
+                dialogY + 100,
+            )
+        )
         frame.grid(row=0, column=0, sticky=(N,S,E,W))
         frame.columnconfigure(0, weight=0)
         frame.columnconfigure(1, weight=1)
-        frame.rowconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=3)
+        frame.rowconfigure(1, weight=2)
+        frame.rowconfigure(2, weight=2)
         window = self.winfo_toplevel()
         window.columnconfigure(0, weight=1)
         window.rowconfigure(0, weight=1)

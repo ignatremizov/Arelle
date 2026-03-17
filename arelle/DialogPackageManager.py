@@ -33,6 +33,9 @@ def backgroundCheckForUpdates(cntlr):
     cntlr.uiThreadQueue.put((DialogPackageManager, [cntlr, packageNamesWithNewerFileDates]))
 
 class DialogPackageManager(Toplevel):
+    DEFAULT_DIALOG_WIDTH = 1240
+    DEFAULT_DIALOG_HEIGHT = 760
+
     def __init__(self, mainWin, packageNamesWithNewerFileDates):
         super(DialogPackageManager, self).__init__(mainWin.parent)
 
@@ -55,9 +58,9 @@ class DialogPackageManager(Toplevel):
         frame = Frame(self)
 
         # left button frame
-        buttonFrame = Frame(frame, width=40)
+        buttonFrame = Frame(frame, width=150)
         buttonFrame.columnconfigure(0, weight=1)
-        addLabel = Label(buttonFrame, text=_("Find taxonomy packages:"), wraplength=64, justify="center")
+        addLabel = Label(buttonFrame, text=_("Find taxonomy packages:"), wraplength=140, justify="center")
         if not self.webCache.workOffline:
             addSelectFromRegistryButton = Button(buttonFrame, text=_("Select"), command=self.selectFromRegistry)
             ToolTip(addSelectFromRegistryButton, text=_("Select package from the XBRL Package Registry."), wraplength=240)
@@ -87,7 +90,7 @@ class DialogPackageManager(Toplevel):
         buttonFrame.grid(row=0, column=0, rowspan=3, sticky=(N, S, W), padx=3, pady=3)
 
         # right tree frame (packages already known to arelle)
-        packagesFrame = Frame(frame, width=700)
+        packagesFrame = Frame(frame, width=1040)
         vScrollbar = Scrollbar(packagesFrame, orient=VERTICAL)
         hScrollbar = Scrollbar(packagesFrame, orient=HORIZONTAL)
         self.packagesView = Treeview(packagesFrame, xscrollcommand=hScrollbar.set, yscrollcommand=vScrollbar.set, height=7)
@@ -102,18 +105,18 @@ class DialogPackageManager(Toplevel):
         packagesFrame.grid(row=0, column=1, columnspan=4, sticky=(N, S, E, W), padx=3, pady=3)
         self.packagesView.focus_set()
 
-        self.packagesView.column("#0", width=190, anchor="w")
+        self.packagesView.column("#0", width=360, minwidth=220, anchor="w", stretch=True)
         self.packagesView.heading("#0", text=_("Name"))
         self.packagesView["columns"] = ("ver", "status", "date", "update", "descr")
-        self.packagesView.column("ver", width=80, anchor="w", stretch=False)
+        self.packagesView.column("ver", width=110, minwidth=90, anchor="w", stretch=False)
         self.packagesView.heading("ver", text=_("Version"))
-        self.packagesView.column("status", width=50, anchor="w", stretch=False)
+        self.packagesView.column("status", width=110, minwidth=90, anchor="w", stretch=False)
         self.packagesView.heading("status", text=_("Status"))
-        self.packagesView.column("date", width=170, anchor="w", stretch=False)
+        self.packagesView.column("date", width=180, minwidth=160, anchor="w", stretch=False)
         self.packagesView.heading("date", text=_("File Date"))
-        self.packagesView.column("update", width=50, anchor="w", stretch=False)
+        self.packagesView.column("update", width=100, minwidth=90, anchor="w", stretch=False)
         self.packagesView.heading("update", text=_("Update"))
-        self.packagesView.column("descr", width=200, anchor="w", stretch=False)
+        self.packagesView.column("descr", width=420, minwidth=240, anchor="w", stretch=True)
         self.packagesView.heading("descr", text=_("Description"))
 
         remappingsFrame = Frame(frame)
@@ -130,54 +133,54 @@ class DialogPackageManager(Toplevel):
         remappingsFrame.grid(row=1, column=1, columnspan=4, sticky=(N, S, E, W), padx=3, pady=3)
         self.remappingsView.focus_set()
 
-        self.remappingsView.column("#0", width=200, anchor="w")
+        self.remappingsView.column("#0", width=420, minwidth=260, anchor="w", stretch=False)
         self.remappingsView.heading("#0", text=_("Prefix"))
         self.remappingsView["columns"] = ("remapping")
-        self.remappingsView.column("remapping", width=500, anchor="w", stretch=False)
+        self.remappingsView.column("remapping", width=760, minwidth=420, anchor="w", stretch=True)
         self.remappingsView.heading("remapping", text=_("Remapping"))
 
         # bottom frame package info details
-        packageInfoFrame = Frame(frame, width=700)
+        packageInfoFrame = Frame(frame, width=1040)
         packageInfoFrame.columnconfigure(1, weight=1)
 
-        self.packageNameLabel = Label(packageInfoFrame, wraplength=600, justify="left",
+        self.packageNameLabel = Label(packageInfoFrame, wraplength=980, justify="left",
                                       font=font.Font(family='Helvetica', size=12, weight='bold'))
         self.packageNameLabel.grid(row=0, column=0, columnspan=6, sticky=W)
         self.packageVersionHdr = Label(packageInfoFrame, text=_("version:"), state=DISABLED)
         self.packageVersionHdr.grid(row=1, column=0, sticky=W)
-        self.packageVersionLabel = Label(packageInfoFrame, wraplength=600, justify="left")
+        self.packageVersionLabel = Label(packageInfoFrame, wraplength=980, justify="left")
         self.packageVersionLabel.grid(row=1, column=1, columnspan=5, sticky=W)
         self.packageLicenseHdr = Label(packageInfoFrame, text=_("license:"), state=DISABLED)
         self.packageLicenseHdr.grid(row=2, column=0, sticky=W)
-        self.packageLicenseLabel = Label(packageInfoFrame, wraplength=600, justify="left")
+        self.packageLicenseLabel = Label(packageInfoFrame, wraplength=980, justify="left")
         self.packageLicenseLabel.grid(row=2, column=1, columnspan=5, sticky=W)
         self.packageDescrHdr = Label(packageInfoFrame, text=_("description:"), state=DISABLED)
         self.packageDescrHdr.grid(row=3, column=0, sticky=W)
-        self.packageDescrLabel = Label(packageInfoFrame, wraplength=600, justify="left")
+        self.packageDescrLabel = Label(packageInfoFrame, wraplength=980, justify="left")
         self.packageDescrLabel.grid(row=3, column=1, columnspan=5, sticky=W)
         self.packagePrefixesHdr = Label(packageInfoFrame, text=_("prefixes:"), state=DISABLED)
         self.packagePrefixesHdr.grid(row=4, column=0, sticky=W)
-        self.packagePrefixesLabel = Label(packageInfoFrame, wraplength=600, justify="left")
+        self.packagePrefixesLabel = Label(packageInfoFrame, wraplength=980, justify="left")
         self.packagePrefixesLabel.grid(row=4, column=1, columnspan=5, sticky=W)
         ToolTip(self.packagePrefixesLabel, text=_("List of prefixes that this package remaps."), wraplength=240)
         self.packageUrlHdr = Label(packageInfoFrame, text=_("URL:"), state=DISABLED)
         self.packageUrlHdr.grid(row=5, column=0, sticky=W)
-        self.packageUrlLabel = Label(packageInfoFrame, wraplength=600, justify="left")
+        self.packageUrlLabel = Label(packageInfoFrame, wraplength=980, justify="left")
         self.packageUrlLabel.grid(row=5, column=1, columnspan=5, sticky=W)
         ToolTip(self.packageUrlLabel, text=_("URL of taxonomy package (local file path or web loaded file)."), wraplength=240)
         self.packageDateHdr = Label(packageInfoFrame, text=_("date:"), state=DISABLED)
         self.packageDateHdr.grid(row=6, column=0, sticky=W)
-        self.packageDateLabel = Label(packageInfoFrame, wraplength=600, justify="left")
+        self.packageDateLabel = Label(packageInfoFrame, wraplength=980, justify="left")
         self.packageDateLabel.grid(row=6, column=1, columnspan=5, sticky=W)
         ToolTip(self.packageDateLabel, text=_("Filesystem date of currently loaded package file (with parenthetical node when an update is available)."), wraplength=240)
         self.publisherHdr = Label(packageInfoFrame, text=_("publisher:"), state=DISABLED)
         self.publisherHdr.grid(row=7, column=0, sticky=W)
-        self.publisherLabel = Label(packageInfoFrame, wraplength=600, justify="left")
+        self.publisherLabel = Label(packageInfoFrame, wraplength=980, justify="left")
         self.publisherLabel.grid(row=7, column=1, columnspan=5, sticky=W)
         ToolTip(self.publisherLabel, text=_("Publisher of currently loaded package file."), wraplength=240)
         self.publicationDateHdr = Label(packageInfoFrame, text=_("publication date:"), state=DISABLED)
         self.publicationDateHdr.grid(row=8, column=0, sticky=W)
-        self.publicationDateLabel = Label(packageInfoFrame, wraplength=600, justify="left")
+        self.publicationDateLabel = Label(packageInfoFrame, wraplength=980, justify="left")
         self.publicationDateLabel.grid(row=8, column=1, columnspan=5, sticky=W)
         ToolTip(self.publicationDateLabel, text=_("Publication date"), wraplength=240)
         self.packageEnableButton = Button(packageInfoFrame, text=self.ENABLE, state=DISABLED, command=self.packageEnable)
@@ -216,11 +219,21 @@ class DialogPackageManager(Toplevel):
 
         self.loadTreeViews()
 
-        self.geometry("+{0}+{1}".format(dialogX+50,dialogY+100))
+        self.minsize(1040, 660)
+        self.geometry(
+            "{0}x{1}+{2}+{3}".format(
+                self.DEFAULT_DIALOG_WIDTH,
+                self.DEFAULT_DIALOG_HEIGHT,
+                dialogX + 50,
+                dialogY + 100,
+            )
+        )
         frame.grid(row=0, column=0, sticky=(N,S,E,W))
         frame.columnconfigure(0, weight=0)
         frame.columnconfigure(1, weight=1)
-        frame.rowconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=3)
+        frame.rowconfigure(1, weight=2)
+        frame.rowconfigure(2, weight=2)
         window = self.winfo_toplevel()
         window.columnconfigure(0, weight=1)
         window.rowconfigure(0, weight=1)
