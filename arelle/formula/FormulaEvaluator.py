@@ -742,11 +742,11 @@ def trialFilterFacts(xpCtx, vb, facts, filterRelationships, filterType, var=None
             # filter now with filter info
             outFacts = set()
             for fact in facts:
-                if fact.isItem:
-                    for varFilterRel, dimQname in noComplHandledFilterRels:
-                        dim = fact.context.qnameDims.get(dimQname)
-                        if dim is not None:
-                            outFacts.add(fact)
+                if (
+                    fact.isItem
+                    and all(fact.context.qnameDims.get(dimQname) is not None for _, dimQname in noComplHandledFilterRels)
+                ):
+                    outFacts.add(fact)
             facts = outFacts
             if len(facts) == 0:
                 return facts
@@ -793,11 +793,11 @@ def trialFilterFacts(xpCtx, vb, facts, filterRelationships, filterType, var=None
             # filter now with filter info
             outFacts = set()
             for fact in facts:
-                if fact.isItem:
-                    for varFilterRel, dimQname in complHandledFilterRels:
-                        dim = fact.context.qnameDims.get(dimQname)
-                        if dim is None:
-                            outFacts.add(fact)
+                if (
+                    fact.isItem
+                    and all(fact.context.qnameDims.get(dimQname) is None for _, dimQname in complHandledFilterRels)
+                ):
+                    outFacts.add(fact)
             facts = outFacts
     return facts
 
@@ -1720,6 +1720,7 @@ class VariableBinding:
     @property
     def evaluationResults(self):
         if self.isFactVar:
+            yieldedFactEvaluation = False
             if self.isBindAsSequence and self.facts:
                 # order aspects to get deterministic handling/performance from run to run
                 fPartitions = factsPartitions(self.xpCtx, self.facts, orderAspects(self.aspectsDefined - self.aspectsCovered))
@@ -1729,6 +1730,7 @@ class VariableBinding:
                         self.yieldedFactContext = self.yieldedFact.context
                         self.yieldedEvaluation = matchesSubPartition
                         self.isFallback = False
+                        yieldedFactEvaluation = True
                         yield matchesSubPartition
             else:
                 for fact in self.facts:
@@ -1736,8 +1738,9 @@ class VariableBinding:
                     self.yieldedFactContext = self.yieldedFact.context
                     self.yieldedEvaluation = fact
                     self.isFallback = False
+                    yieldedFactEvaluation = True
                     yield fact
-            if self.values:
+            if self.values and not yieldedFactEvaluation:
                 self.yieldedFact = None
                 self.yieldedFactContext = None
                 self.yieldedEvaluation = "fallback"
