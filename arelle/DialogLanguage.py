@@ -12,6 +12,7 @@ import regex as re
 
 from arelle import Locale
 from arelle.CntlrWinTooltip import ToolTip
+from arelle.TtkUtil import compute_dialog_width
 from arelle.UiUtil import checkbox, gridCombobox, gridHdr, label
 from arelle.typing import TypeGetText
 
@@ -27,6 +28,11 @@ def askLanguage(mainWin):
 
 
 class DialogLanguage(Toplevel):
+    DEFAULT_DIALOG_WIDTH = 760
+    MIN_DIALOG_WIDTH = 620
+    DEFAULT_DIALOG_HEIGHT = 470
+    MIN_DIALOG_HEIGHT = 470
+
     def __init__(self, mainWin):
         super(DialogLanguage, self).__init__(mainWin.parent)
         self.mainWin = mainWin
@@ -34,6 +40,7 @@ class DialogLanguage(Toplevel):
         parentGeometry = re.match(r"(\d+)x(\d+)[+]?([-]?\d+)[+]?([-]?\d+)", self.parent.geometry())
         dialogX = int(parentGeometry.group(3))
         dialogY = int(parentGeometry.group(4))
+        screenWidth = self.winfo_screenwidth()
         self.transient(self.parent)
         self.title(_("arelle - User Interface and Labels language code settings"))
         self.languageCodes = Locale.languageCodes()
@@ -73,28 +80,41 @@ class DialogLanguage(Toplevel):
             if mainWin.modelManager.defaultLang == langCode:
                 defaultLanguage += ", " + langName
                 break
-        gridHdr(frame, 0, 0, _(
-                 "The system default language is: {0} \n\n"
-                 "You may override with a different language for user interface language and locale settings, and for language of taxonomy linkbase labels to display. \n\n").format(
+        defaultLanguageLabel = Label(frame, text=_("System default language"), anchor=W)
+        defaultLanguageLabel.grid(row=0, column=0, columnspan=5, sticky=EW, padx=12, pady=(12, 0))
+        defaultLanguageValue = Label(
+            frame,
+            text=defaultLanguage,
+            anchor=W,
+            justify="left",
+            font="TkDefaultFont",
+        )
+        defaultLanguageValue.grid(row=1, column=0, columnspan=5, sticky=EW, padx=28, pady=(0, 12))
+        gridHdr(frame, 0, 2, _(
+                 "You may override with a different language for user interface language and locale settings, and for language of taxonomy linkbase labels to display.").format(
                 defaultLanguage),
-              columnspan=5, wraplength=400)
-        label(frame, 0, 1, _("User Interface:"))
-        self.cbUiLang = gridCombobox(frame, 1, 1, values=localeOptions, selectindex=self.uiLangIndex, columnspan=4)
-        label(frame, 0, 2, _("Labels:"))
-        self.cbLabelLang = gridCombobox(frame, 1, 2, values=labelLanguageOptions, selectindex=self.labelLangIndex, columnspan=4)
+              columnspan=5, wraplength=640)
+        label(frame, 0, 3, _("User Interface:")).grid_configure(pady=(20, 0))
+        self.cbUiLang = gridCombobox(frame, 1, 3, values=localeOptions, selectindex=self.uiLangIndex, columnspan=4)
+        self.cbUiLang.grid_configure(pady=(20, 0))
+        label(frame, 0, 4, _("Labels:")).grid_configure(pady=(10, 0))
+        self.cbLabelLang = gridCombobox(frame, 1, 4, values=labelLanguageOptions, selectindex=self.labelLangIndex, columnspan=4)
+        self.cbLabelLang.grid_configure(pady=(10, 0))
         self.cbUiLang.focus_set()
-        self.cbDisableRtl = checkbox(frame, 0, 3,  _('Disable rtl String'), 'disableRtlSting')
+        self.cbDisableRtl = checkbox(frame, 0, 5,  _('Disable rtl String'), 'disableRtlSting')
         ToolTip(self.cbDisableRtl, _('Disable reversing string read order for right to left languages, useful for some locale settings.'), wraplength=240)
         self.cbDisableRtl.valueVar.set(self.mainWin.config.get('disableRtl', 0))
         okButton = Button(frame, text=_("OK"), command=self.ok)
         cancelButton = Button(frame, text=_("Cancel"), command=self.close)
-        okButton.grid(row=3, column=2, sticky=E, pady=3)
-        cancelButton.grid(row=3, column=3, columnspan=2, sticky=EW, pady=3, padx=3)
+        okButton.grid(row=5, column=2, sticky=E, pady=3)
+        cancelButton.grid(row=5, column=3, columnspan=2, sticky=EW, pady=3, padx=3)
         frame.grid(row=0, column=0, sticky=(N,S,E,W))
         frame.columnconfigure(1, weight=1)
         window = self.winfo_toplevel()
         window.columnconfigure(0, weight=1)
-        self.geometry("+{0}+{1}".format(dialogX+50,dialogY+100))
+        dialogWidth = compute_dialog_width(screenWidth, self.DEFAULT_DIALOG_WIDTH, self.MIN_DIALOG_WIDTH)
+        self.minsize(self.MIN_DIALOG_WIDTH, self.MIN_DIALOG_HEIGHT)
+        self.geometry("{0}x{1}+{2}+{3}".format(dialogWidth, self.DEFAULT_DIALOG_HEIGHT, dialogX+50, dialogY+100))
 
         self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.close)

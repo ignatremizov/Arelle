@@ -15,6 +15,7 @@ from arelle.UrlUtil import isHttpUrl
 from arelle.PackageManager import parsePackage
 from arelle.PythonUtil import attrdict
 from arelle import PluginManager
+from arelle.TtkUtil import compute_dialog_width
 
 '''
 caller checks accepted, if True, caller retrieves url
@@ -103,6 +104,23 @@ def selectPackage(parent, packageChoices):
 
 
 class DialogOpenArchive(Toplevel):
+    DEFAULT_DIALOG_WIDTH = {
+        ARCHIVE: 900,
+        ENTRY_POINTS: 960,
+        DISCLOSURE_SYSTEM: 920,
+        PLUGIN: 1080,
+        PACKAGE: 1160,
+    }
+    MIN_DIALOG_WIDTH = {
+        ARCHIVE: 720,
+        ENTRY_POINTS: 760,
+        DISCLOSURE_SYSTEM: 760,
+        PLUGIN: 920,
+        PACKAGE: 980,
+    }
+    DEFAULT_DIALOG_HEIGHT = 720
+    MIN_DIALOG_HEIGHT = 480
+
     def __init__(self, parent, openType, filesource, filenames, title, colHeader, showAltViewButton=False, multiselect=False, selectFiles=None):
         if isinstance(parent, Cntlr):
             cntlr = parent
@@ -116,13 +134,14 @@ class DialogOpenArchive(Toplevel):
         parentGeometry = re.match(r"(\d+)x(\d+)[+]?([-]?\d+)[+]?([-]?\d+)", parent.geometry())
         dialogX = int(parentGeometry.group(3))
         dialogY = int(parentGeometry.group(4))
+        screenWidth = self.winfo_screenwidth()
         self.accepted = False
 
         self.transient(self.parent)
 
         frame = Frame(self)
 
-        treeFrame = Frame(frame, width=500)
+        treeFrame = Frame(frame, width=900)
         vScrollbar = Scrollbar(treeFrame, orient=VERTICAL)
         hScrollbar = Scrollbar(treeFrame, orient=HORIZONTAL)
         self.treeView = Treeview(treeFrame, xscrollcommand=hScrollbar.set, yscrollcommand=vScrollbar.set)
@@ -237,7 +256,14 @@ class DialogOpenArchive(Toplevel):
 
         self.loadTreeView(openType, colHeader, title)
 
-        self.geometry("+{0}+{1}".format(dialogX+50,dialogY+100))
+        dialogWidth = compute_dialog_width(
+            screenWidth,
+            self.DEFAULT_DIALOG_WIDTH.get(openType, 900),
+            self.MIN_DIALOG_WIDTH.get(openType, 720),
+            maximum_fraction=0.8,
+        )
+        self.minsize(self.MIN_DIALOG_WIDTH.get(openType, 720), self.MIN_DIALOG_HEIGHT)
+        self.geometry("{0}x{1}+{2}+{3}".format(dialogWidth, self.DEFAULT_DIALOG_HEIGHT, dialogX+50, dialogY+100))
         frame.grid(row=0, column=0, sticky=(N,S,E,W))
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(0, weight=1)
@@ -281,35 +307,35 @@ class DialogOpenArchive(Toplevel):
         if openType in (ARCHIVE, DISCLOSURE_SYSTEM, PLUGIN, PACKAGE):
             if openType in (PLUGIN, PACKAGE): width = 770
             else: width = 500
-            self.treeView.column("#0", width=width, anchor="w")
+            self.treeView.column("#0", width=width, anchor="w", stretch=True)
             self.treeView.heading("#0", text=colHeader)
             self.isRss = getattr(self.filesource, "isRss", False)
             if self.isRss:
-                self.treeView.column("#0", width=350, anchor="w")
+                self.treeView.column("#0", width=360, minwidth=240, anchor="w", stretch=True)
                 self.treeView["columns"] = ("descr", "date", "instDoc")
-                self.treeView.column("descr", width=50, anchor="center", stretch=False)
+                self.treeView.column("descr", width=100, minwidth=80, anchor="center", stretch=False)
                 self.treeView.heading("descr", text="Form")
-                self.treeView.column("date", width=170, anchor="w", stretch=False)
+                self.treeView.column("date", width=180, minwidth=160, anchor="w", stretch=False)
                 self.treeView.heading("date", text="Pub Date")
-                self.treeView.column("instDoc", width=200, anchor="w", stretch=False)
+                self.treeView.column("instDoc", width=320, minwidth=220, anchor="w", stretch=True)
                 self.treeView.heading("instDoc", text="Instance Document")
             elif openType == PLUGIN:
-                self.treeView.column("#0", width=250, anchor="w")
+                self.treeView.column("#0", width=280, minwidth=180, anchor="w", stretch=True)
                 self.treeView["columns"] = ("vers", "descr", "license")
-                self.treeView.column("vers", width=60, anchor="w", stretch=False)
+                self.treeView.column("vers", width=90, minwidth=80, anchor="w", stretch=False)
                 self.treeView.heading("vers", text="Version")
-                self.treeView.column("descr", width=300, anchor="w", stretch=False)
+                self.treeView.column("descr", width=520, minwidth=280, anchor="w", stretch=True)
                 self.treeView.heading("descr", text="Description")
-                self.treeView.column("license", width=60, anchor="w", stretch=False)
+                self.treeView.column("license", width=140, minwidth=100, anchor="w", stretch=False)
                 self.treeView.heading("license", text="License")
             elif openType == PACKAGE:
-                self.treeView.column("#0", width=200, anchor="w")
+                self.treeView.column("#0", width=280, minwidth=180, anchor="w", stretch=True)
                 self.treeView["columns"] = ("vers", "descr", "license")
-                self.treeView.column("vers", width=100, anchor="w", stretch=False)
+                self.treeView.column("vers", width=110, minwidth=90, anchor="w", stretch=False)
                 self.treeView.heading("vers", text="Version")
-                self.treeView.column("descr", width=400, anchor="w", stretch=False)
+                self.treeView.column("descr", width=620, minwidth=320, anchor="w", stretch=True)
                 self.treeView.heading("descr", text="Description")
-                self.treeView.column("license", width=70, anchor="w", stretch=False)
+                self.treeView.column("license", width=140, minwidth=110, anchor="w", stretch=False)
                 self.treeView.heading("license", text="License")
             else:
                 self.treeView["columns"] = tuple()

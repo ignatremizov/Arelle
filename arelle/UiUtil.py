@@ -1,7 +1,9 @@
 '''
 See COPYRIGHT.md for copyright information.
 '''
+import tkinter as tk
 from tkinter import *
+from tkinter import font as tkFont
 try:
     from tkinter.ttk import *
     from tkinter.ttk import Combobox as _Combobox
@@ -277,13 +279,30 @@ class label(Label):
         #self.config(justify='left')
         self.grid(column=x, row=y, sticky=W, padx=8)
 
-class checkbox(Checkbutton):
+class checkbox(tk.Checkbutton):
     def __init__(self, master, x, y, text, attr=None, columnspan=None, onclick=None):
         self.attr = attr
         self.onclick = onclick
         self.valueVar = StringVar()
         self.valueVar.trace('w', self.valueChanged)
-        Checkbutton.__init__(self, master=master, text=text, variable=self.valueVar)
+        icon_size = max(18, int(tkFont.nametofont("TkDefaultFont").metrics("linespace") * 0.75))
+        self._uncheckedImage = self._checkboxImage(master, icon_size, checked=False)
+        self._checkedImage = self._checkboxImage(master, icon_size, checked=True)
+        tk.Checkbutton.__init__(
+            self,
+            master=master,
+            text=text,
+            variable=self.valueVar,
+            image=self._uncheckedImage,
+            selectimage=self._checkedImage,
+            compound=LEFT,
+            indicatoron=0,
+            anchor=W,
+            borderwidth=0,
+            highlightthickness=0,
+            padx=6,
+            pady=0,
+        )
         self.grid(column=x, row=y, sticky=W, padx=24)
         if columnspan:
             self.grid(columnspan=columnspan)
@@ -306,6 +325,23 @@ class checkbox(Checkbutton):
         self.isChanged = True
         if self.onclick is not None:
             self.onclick(self)
+
+    @staticmethod
+    def _checkboxImage(master, size, checked=False):
+        image = tk.PhotoImage(master=master, width=size, height=size)
+        image.put("#ffffff", to=(0, 0, size, size))
+        image.put("#4a4a4a", to=(0, 0, size, 1))
+        image.put("#4a4a4a", to=(0, size - 1, size, size))
+        image.put("#4a4a4a", to=(0, 0, 1, size))
+        image.put("#4a4a4a", to=(size - 1, 0, size, size))
+        if checked:
+            stroke = max(2, size // 8)
+            for offset in range(stroke):
+                image.put("#2b6cb0", to=(size // 5, size // 2 + offset, size // 2, size // 2 + stroke + offset))
+                image.put("#2b6cb0", to=(size // 2 - stroke, size // 2 + offset, size // 2 + offset, (size * 4) // 5))
+                image.put("#2b6cb0", to=(size // 2 + offset, (size * 4) // 5 - stroke - offset, (size * 4) // 5, (size * 4) // 5 - offset))
+                image.put("#2b6cb0", to=((size * 4) // 5 - stroke - offset, size // 5, (size * 4) // 5 - offset, (size * 4) // 5))
+        return image
 
 class radiobutton(Radiobutton):
     def __init__(self, master, x, y, text, value, attr=None, valueVar=None):

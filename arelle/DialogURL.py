@@ -7,6 +7,7 @@ try:
 except ImportError:
     from ttk import Frame, Button, Label, Entry
 from arelle.CntlrWinTooltip import ToolTip
+from arelle.TtkUtil import compute_dialog_width
 import regex as re
 
 '''
@@ -20,12 +21,16 @@ def askURL(parent, url=None, buttonSEC=False, buttonRSS=False):
 
 
 class DialogURL(Toplevel):
+    DEFAULT_DIALOG_WIDTH = 700
+    MIN_DIALOG_WIDTH = 700
+
     def __init__(self, parent, url=None, buttonSEC=False, buttonRSS=False):
         super(DialogURL, self).__init__(parent)
         self.parent = parent
         parentGeometry = re.match(r"(\d+)x(\d+)[+]?([-]?\d+)[+]?([-]?\d+)", parent.geometry())
         dialogX = int(parentGeometry.group(3))
         dialogY = int(parentGeometry.group(4))
+        screenWidth = self.winfo_screenwidth()
         self.accepted = False
         self.url = None
         self.transient(self.parent)
@@ -34,14 +39,17 @@ class DialogURL(Toplevel):
         self.urlVar.set(url if url is not None else "")
 
         frame = Frame(self)
+        buttonRow = Frame(frame)
+        leftButtons = Frame(buttonRow)
+        rightButtons = Frame(buttonRow)
         urlLabel = Label(frame, text=_("URL:"), underline=0)
         urlEntry = Entry(frame, textvariable=self.urlVar, width=60)
         urlEntry.focus_set()
-        okButton = Button(frame, text=_("OK"), command=self.ok)
-        cancelButton = Button(frame, text=_("Cancel"), command=self.close)
+        okButton = Button(rightButtons, text=_("OK"), command=self.ok)
+        cancelButton = Button(rightButtons, text=_("Cancel"), command=self.close)
         if buttonSEC:
-            usSecButton = Button(frame, text=_("SEC search"), command=self.usSec)
-            usSecButton.grid(row=1, column=1, sticky=W, pady=3)
+            usSecButton = Button(leftButtons, text=_("SEC search"), command=self.usSec)
+            usSecButton.grid(row=0, column=0, sticky=W, pady=3, padx=(3, 4))
             ToolTip(usSecButton, text=_("Opens US SEC Edgar Company Search (in web browser)\n\n"
                                      "(1) Find the company in web browser,\n"
                                      "(2) Click 'documents' button for desired filing,\n"
@@ -52,22 +60,29 @@ class DialogURL(Toplevel):
                                      "(7) Click ok button to load instance document"),
                                      wraplength=480)
         if buttonRSS:
-            rssButton = Button(frame, text=_("SEC RSS"), command=self.rssFeed)
-            rssButton.grid(row=1, column=1, pady=3)
+            rssButton = Button(leftButtons, text=_("SEC RSS"), command=self.rssFeed)
+            rssButton.grid(row=0, column=1, sticky=W, pady=3, padx=(0, 4))
             ToolTip(rssButton, text=_("Opens current US SEC Edgar RSS feed"),
                                      wraplength=480)
         urlLabel.grid(row=0, column=0, sticky=W, pady=3, padx=3)
-        urlEntry.grid(row=0, column=1, columnspan=3, sticky=EW, pady=3, padx=3)
-        okButton.grid(row=1, column=2, sticky=E, pady=3)
+        urlEntry.grid(row=0, column=1, columnspan=4, sticky=EW, pady=3, padx=(3, 12))
+        buttonRow.grid(row=1, column=1, columnspan=4, sticky=EW, pady=3, padx=(0, 12))
+        buttonRow.columnconfigure(0, weight=1)
+        buttonRow.columnconfigure(1, weight=1)
+        leftButtons.grid(row=0, column=0, sticky=W)
+        rightButtons.grid(row=0, column=1, sticky=E)
+        okButton.grid(row=0, column=0, sticky=E, padx=(0, 4))
         ToolTip(okButton, text=_("Opens above URL from web cache, downloading to cache if necessary"), wraplength=240)
-        cancelButton.grid(row=1, column=3, sticky=EW, pady=3, padx=3)
+        cancelButton.grid(row=0, column=1, sticky=E, padx=3)
         ToolTip(cancelButton, text=_("Cancel operation"))
 
         frame.grid(row=0, column=0, sticky=(N,S,E,W))
         frame.columnconfigure(1, weight=1)
         window = self.winfo_toplevel()
         window.columnconfigure(0, weight=1)
-        self.geometry("+{0}+{1}".format(dialogX+50,dialogY+100))
+        dialogWidth = compute_dialog_width(screenWidth, self.DEFAULT_DIALOG_WIDTH, self.MIN_DIALOG_WIDTH)
+        self.minsize(self.MIN_DIALOG_WIDTH, 140)
+        self.geometry("{0}x140+{1}+{2}".format(dialogWidth, dialogX+50, dialogY+100))
 
         self.bind("<Alt-u>", lambda *ignore: urlEntry.focus_set())
         self.bind("<Return>", self.ok)
